@@ -69,3 +69,12 @@ Process bounces you need to configure an AWS SNS to send a callback to Mautic.
 - Github: [@pabloveintimilla](https://github.com/pabloveintimilla)
 
 [MailjetGuidePage]: https://dev.mailjet.com/email/guides/getting-started/
+
+## B&D-Fork (Mautic 7, SES-Tenant)
+
+Abzweigung von kuzmany/mautic-amazon-ses (GPL-3.0-or-later), gepflegt von Blitz & Donner.
+
+- Mautic 7: `CallbackSubscriber` nutzt `getContentTypeFormat()`; `BouncedEmail`, `BouncedEmailRecipient` und `ComplaintEmail` sind eigenständig (Paket `teknasyon-teknoloji/aws-ses-notification` entfällt).
+- SES-Tenant: `Mailer/TenantSesTransportFactory` dekoriert `mailer.transport_factory.amazon`; `ses+api` sendet mit `TenantName`. Tenant-Name aus dem Kopffeld `X-SES-TENANT` (wird entfernt), sonst aus dem Parameter `amazon_ses_tenant` in `config/local.php`; beides leer = ohne Tenant. IAM-Bedingung `ses:TenantName` erzwingt den Tenant auf AWS-Seite.
+- SNS-Abo mit `RawMessageDelivery=true`. Der Callback prüft die SNS-Signatur nicht (wie im Original).
+- Tests: `php test/tenant-test.php <mautic-wurzel>`; Versandtest nur an eigene Adresse oder `success@`/`bounce@simulator.amazonses.com`: `test/sendetest-tenant.php`.
