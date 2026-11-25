@@ -2,7 +2,7 @@
 
 namespace MauticPlugin\AmazonSESBundle\Services\AmazonSES;
 
-use Teknasyon\AwsSesNotification\Email\BouncedEmail as BouncedEmailBase;
+
 
 class BouncedEmailRecipient
 {

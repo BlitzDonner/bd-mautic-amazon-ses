@@ -77,7 +77,7 @@ class CallbackSubscriber implements EventSubscriberInterface
     protected function parseRequest()
     {
         $request = $this->webhookEvent->getRequest();
-        $contentType = $request->getContentType();
+        $contentType = $request->getContentTypeFormat(); // B&D 24.11.2026: getContentType() fehlt ab Symfony 7
         switch ($contentType) {
             case 'json':
                 $this->payload = $request->request->all();

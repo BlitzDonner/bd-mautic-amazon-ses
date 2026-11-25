@@ -4,9 +4,8 @@
     "type": "mautic-plugin",
     "require": {
         "php": ">=8.1.0",
-        "mautic/core-lib": "^6.0",
-        "symfony/amazon-mailer": "6.4.0",
-        "teknasyon-teknoloji/aws-ses-notification": "2.0"
+        "mautic/core-lib": "^6.0 || ^7.0",
+        "symfony/amazon-mailer": "*"
     },
     "license": "GPL-3.0-or-later",
     "keywords": [

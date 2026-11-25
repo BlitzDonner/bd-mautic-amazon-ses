@@ -2,27 +2,45 @@
 
 namespace MauticPlugin\AmazonSESBundle\Services\AmazonSES;
 
-use Teknasyon\AwsSesNotification\Email\ComplaintEmail as ComplaintEmailBase;
-
-class ComplaintEmail extends ComplaintEmailBase
+/**
+ * B&D 24.11.2026: eigenständig, ohne teknasyon/aws-ses-notification (installierte Fassung kennt Email\ComplaintEmail nicht).
+ */
+class ComplaintEmail
 {
+    protected array $sesMessage;
     protected string $complaintFeedbackType;
 
     public function __construct(array $sesMessage)
     {
-        // Fix base class control
-        if (!isset($sesMessage['mail']['sourceIp'])) {
-            $sesMessage['mail']['sourceIp'] = isset($sesMessage['mail']['tags']['ses:source-ip']) ?
-                $sesMessage['mail']['tags']['ses:source-ip'] :
-                '';
-        }
-        parent::__construct($sesMessage);
-        $this->complaintFeedbackType = isset($sesMessage['complaint']['complaintFeedbackType']) ?
-            $sesMessage['complaint']['complaintFeedbackType']
-            : '';
+        $this->sesMessage            = $sesMessage;
+        $this->complaintFeedbackType = $sesMessage['complaint']['complaintFeedbackType'] ?? '';
     }
 
-    public function getComplaintFeedbackType()
+    /** @return array<string> E-Mail-Adressen der Beschwerdeführenden */
+    public function getReceipts(): array
+    {
+        $adressen = [];
+        foreach ($this->sesMessage['complaint']['complainedRecipients'] ?? [] as $recipient) {
+            if (!empty($recipient['emailAddress'])) {
+                $adressen[] = $recipient['emailAddress'];
+            }
+        }
+
+        return $adressen;
+    }
+
+    public function getHeaders(string $name): ?string
+    {
+        foreach ($this->sesMessage['mail']['headers'] ?? [] as $header) {
+            if (0 === strcasecmp($header['name'] ?? '', $name)) {
+                return $header['value'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    public function getComplaintFeedbackType(): string
     {
         return $this->complaintFeedbackType;
     }

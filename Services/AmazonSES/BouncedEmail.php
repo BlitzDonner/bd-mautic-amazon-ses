@@ -2,57 +2,54 @@
 
 namespace MauticPlugin\AmazonSESBundle\Services\AmazonSES;
 
-use Teknasyon\AwsSesNotification\Email\BouncedEmail as BouncedEmailBase;
-use MauticPlugin\AmazonSESBundle\Services\AmazonSES\BouncedEmailRecipient;
-
-class BouncedEmail extends BouncedEmailBase
+/**
+ * B&D 24.11.2026: eigenständig, ohne teknasyon/aws-ses-notification (installierte Fassung kennt Email\BouncedEmail nicht).
+ * Liest das SES-Ereignis (Event Publishing, Raw Message Delivery).
+ */
+class BouncedEmail
 {
     protected array $sesMessage;
     protected array $bounce;
 
     public function __construct(array $sesMessage)
     {
-        // Fix base class control
-        if (!isset($sesMessage['mail']['sourceIp'])) {
-            $sesMessage['mail']['sourceIp'] = isset($sesMessage['mail']['tags']['ses:source-ip']) ?
-                $sesMessage['mail']['tags']['ses:source-ip'] :
-                '';
-        }
-        $this->bounce = isset($sesMessage['bounce']) ?
-            $sesMessage['bounce'] :
-            [];
-
-        parent::__construct($sesMessage);
+        $this->sesMessage = $sesMessage;
+        $this->bounce     = $sesMessage['bounce'] ?? [];
     }
 
-    /**
-     * Get recipients detail data such as diagnosticCode
-     * @return array<BouncedEmailRecipient>
-     */
-    public function getRecipientDetails()
+    /** Nur dauerhafte Rückläufer sperren. */
+    public function shouldRemoved(): bool
     {
-        $bouncedRecipients = $this->bounce['bouncedRecipients'];
-        foreach ($bouncedRecipients as $bouncedRecipient) {
+        return 'Permanent' === ($this->bounce['bounceType'] ?? '');
+    }
+
+    public function getHeaders(string $name): ?string
+    {
+        foreach ($this->sesMessage['mail']['headers'] ?? [] as $header) {
+            if (0 === strcasecmp($header['name'] ?? '', $name)) {
+                return $header['value'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array<BouncedEmailRecipient> */
+    public function getRecipientDetails(): array
+    {
+        $receipts = [];
+        foreach ($this->bounce['bouncedRecipients'] ?? [] as $bouncedRecipient) {
             $receipts[] = new BouncedEmailRecipient($bouncedRecipient);
         }
+
         return $receipts;
     }
 
-    /**
-     * Get bounced subtype
-     * @return string
-     */
     public function getBounceSubType(): string
     {
-        $bouncedRecipients = isset($this->bounce['bounceSubType']) ?
-            $this->bounce['bounceSubType'] :
-            '';
-        return $bouncedRecipients;
+        return $this->bounce['bounceSubType'] ?? '';
     }
 
-    /**
-     * Get all bounce data
-     */
     public function getBounce(): array
     {
         return $this->bounce;
